@@ -9,19 +9,28 @@ export default function Chat() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!input.trim() || !apiKey.trim()) return;
 
     setIsLoading(true);
 
     try {
-      console.log("küldés:", { input, apiKey });
+      console.log("küldés:", {
+        input,
+        apiKey,
+      });
+
+      setInput("");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-4 w-full max-w-xl"
+    >
       <input
         type="password"
         value={apiKey}
@@ -42,7 +51,7 @@ export default function Chat() {
         disabled={!input.trim() || !apiKey.trim() || isLoading}
         className="bg-black text-white rounded-lg py-2 disabled:opacity-50"
       >
-        {isLoading ? "..." : "Küldés"}
+        {isLoading ? "Küldés..." : "Küldés"}
       </button>
     </form>
   );
