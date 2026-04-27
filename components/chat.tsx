@@ -15,11 +15,7 @@ export default function Chat() {
     setIsLoading(true);
 
     try {
-      console.log("küldés:", {
-        input,
-        apiKey,
-      });
-
+      console.log("küldés:", { input, apiKey });
       setInput("");
     } finally {
       setIsLoading(false);
@@ -27,10 +23,7 @@ export default function Chat() {
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-4 w-full max-w-xl"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full max-w-xl">
       <input
         type="password"
         value={apiKey}
