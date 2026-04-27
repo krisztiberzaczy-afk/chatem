@@ -1,48 +1,31 @@
-import { NextResponse } from "next/server";
-
-export const runtime = "edge";
-
-export async function POST(req: Request) {
+export async function POST(req) {
   try {
-    const { input, apiKey } = await req.json();
+    const body = await req.json();
+    const { message, apiKey } = body;
 
-    if (!input || !apiKey) {
-      return NextResponse.json(
-        { error: "Missing input or apiKey" },
-        { status: 400 }
-      );
+    if (!apiKey) {
+      return Response.json({ error: "Nincs API kulcs" }, { status: 400 });
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
+        "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
         model: "gpt-4.1-mini",
-        input: input,
+        input: message,
       }),
     });
 
-    if (!response.ok) {
-      const err = await response.text();
-      return NextResponse.json(
-        { error: err },
-        { status: response.status }
-      );
-    }
-
     const data = await response.json();
 
-    return NextResponse.json({
-      output: data.output?.[0]?.content?.[0]?.text ?? "",
+    return Response.json({
+      output: data.output_text || "Nincs válasz",
     });
 
-  } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message ?? "Unknown error" },
-      { status: 500 }
-    );
+  } catch (err) {
+    return Response.json({ error: err.message }, { status: 500 });
   }
 }
