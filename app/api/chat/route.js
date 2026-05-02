@@ -5,10 +5,6 @@ export async function POST(req) {
 
     const apiKey = process.env.OPENAI_API_KEY;
 
-    if (!apiKey) {
-      return Response.json({ error: "Nincs API kulcs (Vercel env)" }, { status: 500 });
-    }
-
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -23,11 +19,40 @@ export async function POST(req) {
 
     const data = await response.json();
 
-    return Response.json({
-      output: data.output_text || "Nincs válasz",
-    });
+    return new Response(
+      JSON.stringify({
+        output: data.output_text || "Nincs válasz",
+      }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
 
   } catch (err) {
-    return Response.json({ error: err.message }, { status: 500 });
+    return new Response(
+      JSON.stringify({ error: err.message }),
+      {
+        status: 500,
+        headers: {
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
   }
+}
+
+// EZ IS KELL:
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 200,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    },
+  });
 }
