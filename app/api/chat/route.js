@@ -1,26 +1,21 @@
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  const { input, apiKey } = await req.json();
-
-  const prompt = `
-IDE ÍRD A SAJÁT PROMPTODAT
-
-User: ${input}
-`;
+  const body = await req.json();
+  const message = body.message; // <-- EZ a kulcs, amit a frontend küld
 
   try {
     const res = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`
+        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: "Te egy segítő AI vagy." },
-          { role: "user", content: prompt }
+          { role: "user", content: message }
         ]
       })
     });
@@ -29,7 +24,7 @@ User: ${input}
 
     return new Response(
       JSON.stringify({
-        output: data.choices?.[0]?.message?.content || "Nincs válasz"
+        reply: data.choices?.[0]?.message?.content || data.error?.message || "Nincs válasz"
       }),
       {
         status: 200,
@@ -42,19 +37,8 @@ User: ${input}
 
   } catch (e) {
     return new Response(
-      JSON.stringify({ error: "API hiba" }),
+      JSON.stringify({ error: e.message }),
       { status: 500 }
     );
   }
-}
-
-export async function OPTIONS() {
-  return new Response(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type"
-    }
-  });
 }
