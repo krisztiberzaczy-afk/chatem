@@ -1,10 +1,12 @@
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { message, apiKey } = body;
+    const { message } = body;
+
+    const apiKey = process.env.OPENAI_API_KEY;
 
     if (!apiKey) {
-      return Response.json({ error: "Nincs API kulcs" }, { status: 400 });
+      return Response.json({ error: "Nincs API kulcs (Vercel env)" }, { status: 500 });
     }
 
     const response = await fetch("https://api.openai.com/v1/responses", {
