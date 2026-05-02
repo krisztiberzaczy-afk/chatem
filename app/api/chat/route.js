@@ -1,12 +1,12 @@
 export const dynamic = "force-dynamic";
 
 export async function POST(req) {
-  const { message } = await req.json();
+  const { input, apiKey } = await req.json();
 
   const prompt = `
 IDE ÍRD A SAJÁT PROMPTODAT
 
-User: ${message}
+User: ${input}
 `;
 
   try {
@@ -14,7 +14,7 @@ User: ${message}
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
+        "Authorization": `Bearer ${apiKey}`
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
@@ -29,7 +29,7 @@ User: ${message}
 
     return new Response(
       JSON.stringify({
-        reply: data.choices?.[0]?.message?.content || "Nincs válasz"
+        output: data.choices?.[0]?.message?.content || "Nincs válasz"
       }),
       {
         status: 200,
