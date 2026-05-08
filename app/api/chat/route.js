@@ -692,7 +692,7 @@ export async function POST(req) {
       body: JSON.stringify({
         model: "gpt-5.5",
         stream: true,
-        max_completion_tokens: 8000,
+        max_completion_tokens: 12000,
         messages: [
           { role: "developer", content: SYSTEM_PROMPT },
           ...messagesFromClient
