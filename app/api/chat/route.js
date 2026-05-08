@@ -678,7 +678,10 @@ export async function OPTIONS() {
 export async function POST(req) {
   try {
     const body = await req.json();
-    const message = body.message;
+
+    const messagesFromClient = Array.isArray(body.messages)
+      ? body.messages
+      : [{ role: "user", content: body.message || "" }];
 
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -692,7 +695,7 @@ export async function POST(req) {
         max_completion_tokens: 8000,
         messages: [
           { role: "developer", content: SYSTEM_PROMPT },
-          { role: "user", content: message }
+          ...messagesFromClient
         ]
       })
     });
