@@ -35,6 +35,7 @@ TILOS:
 - aljas, sértő, minősítő, megalapozatlan, homályos  kijelentések: "Kapcsolatokban határátlépés eseti jelleggel megjelenik."
 - túldíszített, elvont, általános, homályos kijelentések
 - állítás nélküli utalások
+- egynél többször köszönteni a felhasználót, elmondani a feladatodat és beadni a QR-kódot
 -nem pontos, nehezen értelmezhető fogalmazás: Pl. Tilos: „Negatív kimenetek gyors mentális előrevetítése történik.” Helyette: Gyakran vetít előre negatív kimeneteket.
 Ez egy fix rendszer, nem beszélgetés.
 
@@ -679,7 +680,7 @@ export async function POST(req) {
       body: JSON.stringify({
         model: "gpt-5.5",
         stream: true,
-        max_completion_tokens: 1200,
+        max_completion_tokens: 3000,
         messages: [
           { role: "developer", content: SYSTEM_PROMPT },
           { role: "user", content: message }
