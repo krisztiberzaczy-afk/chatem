@@ -647,7 +647,12 @@ Elsődleges cél:
 ONTOLÓGIA KORLÁTOZÁSA
 Az ontológiai kategóriák nem helyettesíthetik az egyedi kettős kötések azonosítását.
 Ha egy ontológiai kategória több külön működő ellentmondást fed le,
-akkor ezeket külön kell bontani.`;
+akkor ezeket külön kell bontani.
+
+FELADAT VÉGREHAJTÁSA ÉRVÉNYTELEN, HA
+-a felhasználót egynál többször köszöntöd
+-egynél többször mondod el a munkád célját
+-egynél többször adod be a QR-kódot.`;
  
 export async function OPTIONS() {
   return new Response(null, {
