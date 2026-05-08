@@ -661,10 +661,11 @@ export async function OPTIONS() {
 }
  
 export async function POST(req) {
-  const body = await req.json();
-  const message = body.message;
   try {
-    const res = await fetch("https://api.openai.com/v1/chat/completions", {
+    const body = await req.json();
+    const message = body.message;
+
+    const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -672,37 +673,93 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         model: "gpt-5.5",
-        max_completion_tokens: 700,
+        stream: true,
+        max_completion_tokens: 1200,
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "developer", content: SYSTEM_PROMPT },
           { role: "user", content: message }
         ]
       })
     });
-    const data = await res.json();
-    return new Response(
-      JSON.stringify({
-        reply: data.choices?.[0]?.message?.content || data.error?.message || "Nincs válasz"
-      }),
-      {
-        status: 200,
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type"
-        }
-      }
-    );
-  } catch (e) {
-    return new Response(
-      JSON.stringify({ error: e.message }),
-      {
+
+    if (!openaiRes.ok) {
+      const errorText = await openaiRes.text();
+
+      return new Response("OpenAI hiba: " + errorText, {
         status: 500,
         headers: {
+          "Content-Type": "text/plain; charset=utf-8",
           "Access-Control-Allow-Origin": "*"
         }
+      });
+    }
+
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = openaiRes.body.getReader();
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+
+          if (done) {
+            controller.close();
+            break;
+          }
+
+          buffer += decoder.decode(value, { stream: true });
+
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+
+            if (!trimmed.startsWith("data: ")) continue;
+
+            const data = trimmed.replace("data: ", "");
+
+            if (data === "[DONE]") {
+              controller.close();
+              return;
+            }
+
+            try {
+              const json = JSON.parse(data);
+              const chunk = json.choices?.[0]?.delta?.content;
+
+              if (chunk) {
+                controller.enqueue(encoder.encode(chunk));
+              }
+            } catch (err) {
+              console.error("Stream parse hiba:", err);
+            }
+          }
+        }
       }
-    );
+    });
+
+    return new Response(stream, {
+      status: 200,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "no-cache",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type"
+      }
+    });
+
+  } catch (e) {
+    return new Response("Szerverhiba: " + e.message, {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
   }
 }
