@@ -717,7 +717,56 @@ export async function OPTIONS() {
     }
   });
 }
- 
+ export async function GET() {
+  try {
+    const userId = "default-user";
+
+    const usageRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/users_usage?user_id=eq.${encodeURIComponent(userId)}&select=used_budget_usd`,
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    if (!usageRes.ok) {
+      const errorText = await usageRes.text();
+      return new Response("Supabase lekérdezési hiba: " + errorText, {
+        status: 500,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+
+    const usageRows = await usageRes.json();
+    const usedBudgetUsd = Number(usageRows?.[0]?.used_budget_usd || 0);
+
+    return new Response(JSON.stringify({
+      usedBudgetUsd: usedBudgetUsd
+    }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+
+  } catch (e) {
+    return new Response("Szerverhiba: " + e.message, {
+      status: 500,
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Access-Control-Allow-Origin": "*"
+      }
+    });
+  }
+}
 export async function POST(req) {
   try {
 const body = await req.json();
