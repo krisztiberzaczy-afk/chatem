@@ -722,8 +722,9 @@ export async function POST(req) {
   try {
 const body = await req.json();
 
-const usedBudgetUsd = Number(body.usedBudgetUsd || 0);
 const totalBudgetUsd = 3.50;
+
+const userId = body.userId || "default-user";
 
 if (usedBudgetUsd >= totalBudgetUsd) {
  return new Response("A 3,5 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
