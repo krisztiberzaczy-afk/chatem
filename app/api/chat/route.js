@@ -723,7 +723,7 @@ const usedBudgetUsd = Number(body.usedBudgetUsd || 0);
 const totalBudgetUsd = 3.50;
 
 if (usedBudgetUsd >= totalBudgetUsd) {
-  return new Response("A 3 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
+ return new Response("A 3,5 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
     status: 402,
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
