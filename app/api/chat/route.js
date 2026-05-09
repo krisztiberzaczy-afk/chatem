@@ -712,17 +712,30 @@ export async function OPTIONS() {
     status: 204,
     headers: {
       "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type"
     }
   });
 }
- export async function GET() {
+
+export async function GET(req) {
   try {
-    const userId = "default-user";
+    const url = new URL(req.url);
+    const accessCode = String(url.searchParams.get("accessCode") || "").trim();
+
+    if (!accessCode) {
+      return new Response("Hiányzó hozzáférési kód.", {
+        status: 401,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
 
     const usageRes = await fetch(
-`${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}&is_active=eq.true&select=used_budget_usd,total_budget_usd`      {
+      `${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}&is_active=eq.true&select=used_budget_usd,total_budget_usd`,
+      {
         method: "GET",
         headers: {
           "apikey": SUPABASE_SERVICE_ROLE_KEY,
@@ -734,6 +747,7 @@ export async function OPTIONS() {
 
     if (!usageRes.ok) {
       const errorText = await usageRes.text();
+
       return new Response("Supabase lekérdezési hiba: " + errorText, {
         status: 500,
         headers: {
@@ -744,20 +758,23 @@ export async function OPTIONS() {
     }
 
     const usageRows = await usageRes.json();
-if (!usageRows?.length) {
-  return new Response("Érvénytelen vagy inaktív hozzáférési kód.", {
-    status: 403,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
-    }
-  });
-}
 
-const usedBudgetUsd = Number(usageRows[0].used_budget_usd || 0);
-const totalBudgetUsd = Number(usageRows[0].total_budget_usd || 3.50);
+    if (!usageRows?.length) {
+      return new Response("Érvénytelen vagy inaktív hozzáférési kód.", {
+        status: 403,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
+    }
+
+    const usedBudgetUsd = Number(usageRows[0].used_budget_usd || 0);
+    const totalBudgetUsd = Number(usageRows[0].total_budget_usd || 3.50);
+
     return new Response(JSON.stringify({
-      usedBudgetUsd: usedBudgetUsd
+      usedBudgetUsd: usedBudgetUsd,
+      totalBudgetUsd: totalBudgetUsd
     }), {
       status: 200,
       headers: {
@@ -776,60 +793,75 @@ const totalBudgetUsd = Number(usageRows[0].total_budget_usd || 3.50);
     });
   }
 }
+
 export async function POST(req) {
   try {
-const body = await req.json();
+    const body = await req.json();
 
-const accessCode = String(body.accessCode || "").trim();
+    const accessCode = String(body.accessCode || "").trim();
 
-if (!accessCode) {
-  return new Response("Hiányzó hozzáférési kód.", {
-    status: 401,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
+    if (!accessCode) {
+      return new Response("Hiányzó hozzáférési kód.", {
+        status: 401,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
-  });
-}
 
-   const usageRes = await fetch(
-`${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}&is_active=eq.true&select=used_budget_usd,total_budget_usd`  {
-    method: "GET",
-    headers: {
-      "apikey": SUPABASE_SERVICE_ROLE_KEY,
-      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json"
+    const usageRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}&is_active=eq.true&select=used_budget_usd,total_budget_usd`,
+      {
+        method: "GET",
+        headers: {
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+
+    if (!usageRes.ok) {
+      const errorText = await usageRes.text();
+
+      return new Response("Supabase lekérdezési hiba: " + errorText, {
+        status: 500,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
-  }
-);
 
-if (!usageRes.ok) {
-  const errorText = await usageRes.text();
-  return new Response("Supabase lekérdezési hiba: " + errorText, {
-    status: 500,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
+    const usageRows = await usageRes.json();
+
+    if (!usageRows?.length) {
+      return new Response("Érvénytelen vagy inaktív hozzáférési kód.", {
+        status: 403,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
-  });
-}
 
-const usageRows = await usageRes.json();
-const usedBudgetUsd = Number(usageRows?.[0]?.used_budget_usd || 0);
+    const usedBudgetUsd = Number(usageRows[0].used_budget_usd || 0);
+    const totalBudgetUsd = Number(usageRows[0].total_budget_usd || 3.50);
 
-if (usedBudgetUsd >= totalBudgetUsd) {
- return new Response("A 3,5 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
-    status: 402,
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Access-Control-Allow-Origin": "*"
+    if (usedBudgetUsd >= totalBudgetUsd) {
+      return new Response("A 3,5 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
+        status: 402,
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Access-Control-Allow-Origin": "*"
+        }
+      });
     }
-  });
-}
 
-const messagesFromClient = Array.isArray(body.messages)
-  ? body.messages
-  : [{ role: "user", content: body.message || "" }];
+    const messagesFromClient = Array.isArray(body.messages)
+      ? body.messages
+      : [{ role: "user", content: body.message || "" }];
 
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -837,18 +869,18 @@ const messagesFromClient = Array.isArray(body.messages)
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
-   body: JSON.stringify({
-  model: "gpt-5.5",
-  stream: true,
-  stream_options: {
-    include_usage: true
-  },
-  max_completion_tokens: 12000,
-  messages: [
-    { role: "developer", content: SYSTEM_PROMPT },
-    ...messagesFromClient
-  ]
-})
+      body: JSON.stringify({
+        model: "gpt-5.5",
+        stream: true,
+        stream_options: {
+          include_usage: true
+        },
+        max_completion_tokens: 12000,
+        messages: [
+          { role: "developer", content: SYSTEM_PROMPT },
+          ...messagesFromClient
+        ]
+      })
     });
 
     if (!openaiRes.ok) {
@@ -898,55 +930,56 @@ const messagesFromClient = Array.isArray(body.messages)
 
             try {
               const json = JSON.parse(data);
-            const chunk = json.choices?.[0]?.delta?.content;
+              const chunk = json.choices?.[0]?.delta?.content;
 
-if (chunk) {
-  controller.enqueue(encoder.encode(chunk));
-}
+              if (chunk) {
+                controller.enqueue(encoder.encode(chunk));
+              }
 
-if (json.usage) {
-  const inputTokens = json.usage.prompt_tokens || 0;
-  const outputTokens = json.usage.completion_tokens || 0;
+              if (json.usage) {
+                const inputTokens = json.usage.prompt_tokens || 0;
+                const outputTokens = json.usage.completion_tokens || 0;
 
- const cachedInputTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
-const regularInputTokens = Math.max(inputTokens - cachedInputTokens, 0);
+                const cachedInputTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
+                const regularInputTokens = Math.max(inputTokens - cachedInputTokens, 0);
 
-const inputCostUsd = (regularInputTokens / 1000000) * 5.00;
-const cachedInputCostUsd = (cachedInputTokens / 1000000) * 0.50;
-const outputCostUsd = (outputTokens / 1000000) * 30.00;
+                const inputCostUsd = (regularInputTokens / 1000000) * 5.00;
+                const cachedInputCostUsd = (cachedInputTokens / 1000000) * 0.50;
+                const outputCostUsd = (outputTokens / 1000000) * 30.00;
 
-const totalCostUsd = inputCostUsd + cachedInputCostUsd + outputCostUsd;
+                const totalCostUsd = inputCostUsd + cachedInputCostUsd + outputCostUsd;
+                const newUsedBudgetUsd = usedBudgetUsd + totalCostUsd;
 
- const newUsedBudgetUsd = usedBudgetUsd + totalCostUsd;
+                await fetch(
+                  `${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}`,
+                  {
+                    method: "PATCH",
+                    headers: {
+                      "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                      "Content-Type": "application/json",
+                      "Prefer": "return=minimal"
+                    },
+                    body: JSON.stringify({
+                      used_budget_usd: newUsedBudgetUsd
+                    })
+                  }
+                );
 
-await fetch(
-  `${SUPABASE_URL}/rest/v1/users_usage?user_id=eq.${encodeURIComponent(userId)}`,
-  {
-    method: "PATCH",
-    headers: {
-      "apikey": SUPABASE_SERVICE_ROLE_KEY,
-      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      "Content-Type": "application/json",
-      "Prefer": "return=minimal"
-    },
-    body: JSON.stringify({
-      used_budget_usd: newUsedBudgetUsd
-    })
-  }
-);
+                const usagePayload = {
+                  inputTokens: inputTokens,
+                  outputTokens: outputTokens,
+                  totalTokens: inputTokens + outputTokens,
+                  costUsd: totalCostUsd,
+                  usedBudgetUsd: newUsedBudgetUsd,
+                  totalBudgetUsd: totalBudgetUsd
+                };
 
-const usagePayload = {
-  inputTokens: inputTokens,
-  outputTokens: outputTokens,
-  totalTokens: inputTokens + outputTokens,
-  costUsd: totalCostUsd,
-  usedBudgetUsd: newUsedBudgetUsd
-};
+                controller.enqueue(
+                  encoder.encode("\n\n[[USAGE:" + JSON.stringify(usagePayload) + "]]")
+                );
+              }
 
-  controller.enqueue(
-    encoder.encode("\n\n[[USAGE:" + JSON.stringify(usagePayload) + "]]")
-  );
-}
             } catch (err) {
               console.error("Stream parse hiba:", err);
             }
@@ -961,7 +994,7 @@ const usagePayload = {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "no-cache",
         "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
         "Access-Control-Allow-Headers": "Content-Type"
       }
     });
@@ -976,4 +1009,3 @@ const usagePayload = {
     });
   }
 }
-
