@@ -729,15 +729,18 @@ export async function POST(req) {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`
       },
-      body: JSON.stringify({
-        model: "gpt-5.5",
-        stream: true,
-        max_completion_tokens: 12000,
-        messages: [
-          { role: "developer", content: SYSTEM_PROMPT },
-          ...messagesFromClient
-        ]
-      })
+   body: JSON.stringify({
+  model: "gpt-5.5",
+  stream: true,
+  stream_options: {
+    include_usage: true
+  },
+  max_completion_tokens: 12000,
+  messages: [
+    { role: "developer", content: SYSTEM_PROMPT },
+    ...messagesFromClient
+  ]
+})
     });
 
     if (!openaiRes.ok) {
@@ -787,11 +790,31 @@ export async function POST(req) {
 
             try {
               const json = JSON.parse(data);
-              const chunk = json.choices?.[0]?.delta?.content;
+            const chunk = json.choices?.[0]?.delta?.content;
 
-              if (chunk) {
-                controller.enqueue(encoder.encode(chunk));
-              }
+if (chunk) {
+  controller.enqueue(encoder.encode(chunk));
+}
+
+if (json.usage) {
+  const inputTokens = json.usage.prompt_tokens || 0;
+  const outputTokens = json.usage.completion_tokens || 0;
+
+  const inputCostUsd = (inputTokens / 1000000) * 5.00;
+  const outputCostUsd = (outputTokens / 1000000) * 30.00;
+  const totalCostUsd = inputCostUsd + outputCostUsd;
+
+  const usagePayload = {
+    inputTokens: inputTokens,
+    outputTokens: outputTokens,
+    totalTokens: inputTokens + outputTokens,
+    costUsd: totalCostUsd
+  };
+
+  controller.enqueue(
+    encoder.encode("\n\n[[USAGE:" + JSON.stringify(usagePayload) + "]]")
+  );
+}
             } catch (err) {
               console.error("Stream parse hiba:", err);
             }
