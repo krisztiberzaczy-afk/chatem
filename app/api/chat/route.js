@@ -793,8 +793,7 @@ if (!accessCode) {
 }
 
    const usageRes = await fetch(
-  `${SUPABASE_URL}/rest/v1/users_usage?user_id=eq.${encodeURIComponent(userId)}&select=used_budget_usd`,
-  {
+`${SUPABASE_URL}/rest/v1/access_codes?access_code=eq.${encodeURIComponent(accessCode)}&is_active=eq.true&select=used_budget_usd,total_budget_usd`  {
     method: "GET",
     headers: {
       "apikey": SUPABASE_SERVICE_ROLE_KEY,
