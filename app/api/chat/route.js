@@ -813,9 +813,14 @@ if (json.usage) {
   const inputTokens = json.usage.prompt_tokens || 0;
   const outputTokens = json.usage.completion_tokens || 0;
 
-  const inputCostUsd = (inputTokens / 1000000) * 2.50;
-  const outputCostUsd = (outputTokens / 1000000) * 15.00;
-  const totalCostUsd = inputCostUsd + outputCostUsd;
+ const cachedInputTokens = json.usage.prompt_tokens_details?.cached_tokens || 0;
+const regularInputTokens = Math.max(inputTokens - cachedInputTokens, 0);
+
+const inputCostUsd = (regularInputTokens / 1000000) * 5.00;
+const cachedInputCostUsd = (cachedInputTokens / 1000000) * 0.50;
+const outputCostUsd = (outputTokens / 1000000) * 30.00;
+
+const totalCostUsd = inputCostUsd + cachedInputCostUsd + outputCostUsd;
 
   const usagePayload = {
     inputTokens: inputTokens,
