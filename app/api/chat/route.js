@@ -780,8 +780,6 @@ export async function POST(req) {
   try {
 const body = await req.json();
 
-const totalBudgetUsd = 3.50;
-
 const accessCode = String(body.accessCode || "").trim();
 
 if (!accessCode) {
