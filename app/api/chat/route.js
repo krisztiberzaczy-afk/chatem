@@ -720,7 +720,7 @@ export async function POST(req) {
 const body = await req.json();
 
 const usedBudgetUsd = Number(body.usedBudgetUsd || 0);
-const totalBudgetUsd = 3.00;
+const totalBudgetUsd = 3.50;
 
 if (usedBudgetUsd >= totalBudgetUsd) {
   return new Response("A 3 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
