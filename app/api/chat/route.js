@@ -717,11 +717,24 @@ export async function OPTIONS() {
  
 export async function POST(req) {
   try {
-    const body = await req.json();
+const body = await req.json();
 
-    const messagesFromClient = Array.isArray(body.messages)
-      ? body.messages
-      : [{ role: "user", content: body.message || "" }];
+const usedBudgetUsd = Number(body.usedBudgetUsd || 0);
+const totalBudgetUsd = 3.00;
+
+if (usedBudgetUsd >= totalBudgetUsd) {
+  return new Response("A 3 dolláros keret elfogyott. Újabb AI-válasz már nem indítható.", {
+    status: 402,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
+
+const messagesFromClient = Array.isArray(body.messages)
+  ? body.messages
+  : [{ role: "user", content: body.message || "" }];
 
     const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
