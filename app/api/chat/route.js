@@ -773,7 +773,17 @@ const body = await req.json();
 
 const totalBudgetUsd = 3.50;
 
-const userId = body.userId || "default-user";
+const accessCode = String(body.accessCode || "").trim();
+
+if (!accessCode) {
+  return new Response("Hiányzó hozzáférési kód.", {
+    status: 401,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
 
    const usageRes = await fetch(
   `${SUPABASE_URL}/rest/v1/users_usage?user_id=eq.${encodeURIComponent(userId)}&select=used_budget_usd`,
