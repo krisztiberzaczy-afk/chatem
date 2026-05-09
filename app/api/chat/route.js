@@ -813,8 +813,8 @@ if (json.usage) {
   const inputTokens = json.usage.prompt_tokens || 0;
   const outputTokens = json.usage.completion_tokens || 0;
 
-  const inputCostUsd = (inputTokens / 1000000) * 5.00;
-  const outputCostUsd = (outputTokens / 1000000) * 30.00;
+  const inputCostUsd = (inputTokens / 1000000) * 2.50;
+  const outputCostUsd = (outputTokens / 1000000) * 15.00;
   const totalCostUsd = inputCostUsd + outputCostUsd;
 
   const usagePayload = {
