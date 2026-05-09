@@ -852,6 +852,24 @@ const outputCostUsd = (outputTokens / 1000000) * 30.00;
 
 const totalCostUsd = inputCostUsd + cachedInputCostUsd + outputCostUsd;
 
+ const newUsedBudgetUsd = usedBudgetUsd + totalCostUsd;
+
+await fetch(
+  `${SUPABASE_URL}/rest/v1/users_usage?user_id=eq.${encodeURIComponent(userId)}`,
+  {
+    method: "PATCH",
+    headers: {
+      "apikey": SUPABASE_SERVICE_ROLE_KEY,
+      "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+      "Content-Type": "application/json",
+      "Prefer": "return=minimal"
+    },
+    body: JSON.stringify({
+      used_budget_usd: newUsedBudgetUsd
+    })
+  }
+);
+
   const usagePayload = {
     inputTokens: inputTokens,
     outputTokens: outputTokens,
