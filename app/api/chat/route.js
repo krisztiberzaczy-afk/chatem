@@ -744,8 +744,18 @@ export async function OPTIONS() {
     }
 
     const usageRows = await usageRes.json();
-    const usedBudgetUsd = Number(usageRows?.[0]?.used_budget_usd || 0);
+if (!usageRows?.length) {
+  return new Response("Érvénytelen vagy inaktív hozzáférési kód.", {
+    status: 403,
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Access-Control-Allow-Origin": "*"
+    }
+  });
+}
 
+const usedBudgetUsd = Number(usageRows[0].used_budget_usd || 0);
+const totalBudgetUsd = Number(usageRows[0].total_budget_usd || 3.50);
     return new Response(JSON.stringify({
       usedBudgetUsd: usedBudgetUsd
     }), {
