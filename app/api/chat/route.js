@@ -870,12 +870,13 @@ await fetch(
   }
 );
 
-  const usagePayload = {
-    inputTokens: inputTokens,
-    outputTokens: outputTokens,
-    totalTokens: inputTokens + outputTokens,
-    costUsd: totalCostUsd
-  };
+const usagePayload = {
+  inputTokens: inputTokens,
+  outputTokens: outputTokens,
+  totalTokens: inputTokens + outputTokens,
+  costUsd: totalCostUsd,
+  usedBudgetUsd: newUsedBudgetUsd
+};
 
   controller.enqueue(
     encoder.encode("\n\n[[USAGE:" + JSON.stringify(usagePayload) + "]]")
